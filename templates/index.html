@@ -79,8 +79,9 @@
               </label>
               <div class="input-group">
                 <input type="number" class="form-control" id="kecepatan_arus" step="0.01" min="0" required />
-                <span class="input-group-text">m/s</span>
+                <span class="input-group-text">knot</span>
               </div>
+              <small class="text-muted" id="arusKonversi">&asymp; 0 m/s</small>
             </div>
             <div class="col-md-4">
               <label for="kecepatan_angin" class="form-label">
@@ -141,7 +142,8 @@
     (<span id="kategoriGelombang" class="fw-bold"></span>)
   </li>
   <li>
-    Kecepatan Arus: <span id="inputArus"></span> m/s
+    Kecepatan Arus: <span id="inputArus"></span> knot
+    (= <span id="inputArusMs"></span> m/s)
     (<span id="kategoriArus" class="fw-bold"></span>)
   </li>
   <li>
@@ -168,6 +170,9 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+  // 1 knot = 0.514444 m/s
+  const KNOT_TO_MS = 0.514444;
+
   // klik pilihan kapal
   document.querySelectorAll('.ship-option').forEach(o =>
     o.addEventListener('click', function () {
@@ -176,6 +181,18 @@
       this.querySelector('input[type="radio"]').checked = true;
     })
   );
+
+  // konversi knot -> m/s (tampil live di bawah input arus)
+  const inputArusEl = document.getElementById('kecepatan_arus');
+  const arusKonversiEl = document.getElementById('arusKonversi');
+  inputArusEl.addEventListener('input', function () {
+    const knot = parseFloat(this.value);
+    if (isNaN(knot) || knot < 0) {
+      arusKonversiEl.textContent = '\u2248 0 m/s';
+    } else {
+      arusKonversiEl.textContent = '\u2248 ' + (knot * KNOT_TO_MS).toFixed(3) + ' m/s';
+    }
+  });
 
   // ambil kategori terbesar dari fuzzifikasi
   function getKategoriTerbesar(obj) {
@@ -245,15 +262,16 @@
       // Input detail angka
       document.getElementById('inputJenisKapal').textContent = d.jenis_kapal;
       document.getElementById('inputGelombang').textContent = d.tinggi_gelombang;
-      document.getElementById('inputArus').textContent = d.kecepatan_arus;
+      document.getElementById('inputArus').textContent = d.kecepatan_arus_knot;
+      document.getElementById('inputArusMs').textContent = d.kecepatan_arus.toFixed(3);
       document.getElementById('inputAngin').textContent = d.kecepatan_angin;
 
-      // ✅ Status di Informasi Perhitungan (warna ikut)
+      // Status di Informasi Perhitungan (warna ikut)
       const st = document.getElementById('detailStatus');
       st.textContent = d.kategori;
       st.className = 'fw-bold text-' + d.warna;
 
-      // ✅ KATEGORI PARAMETER (berdasarkan membership terbesar)
+      // KATEGORI PARAMETER (berdasarkan membership terbesar)
       const kg = getKategoriTerbesar(d.fuzzifikasi.gelombang);
       const ka = getKategoriTerbesar(d.fuzzifikasi.arus);
       const kw = getKategoriTerbesar(d.fuzzifikasi.angin);
@@ -312,6 +330,7 @@
     document.querySelector('.hero:first-child').style.display = 'block';
     document.querySelectorAll('.ship-option').forEach(o => o.classList.remove('active'));
     document.getElementById('option-nelayan').classList.add('active');
+    document.getElementById('arusKonversi').textContent = '\u2248 0 m/s';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 </script>
