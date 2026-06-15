@@ -3,6 +3,9 @@ import numpy as np
 
 app = Flask(__name__)
 
+# 1 knot = 0.514444 m/s
+KNOT_TO_MS = 0.514444
+
 # ==================== FUNGSI KEANGGOTAAN KECEPATAN ANGIN (knot) ====================
 # KAPAL NELAYAN - Tabel 4.2: 0-8, 7-11, 9-15, >14
 def angin_nelayan_sr(x):
@@ -432,11 +435,18 @@ def hitung():
     try:
         data = request.get_json()
         tinggi_gelombang = float(data['tinggi_gelombang'])
-        kecepatan_arus = float(data['kecepatan_arus'])
+
+        # input arus sekarang dalam KNOT -> konversi ke m/s
+        kecepatan_arus_knot = float(data['kecepatan_arus'])
+        kecepatan_arus = kecepatan_arus_knot * KNOT_TO_MS
+
         kecepatan_angin = float(data['kecepatan_angin'])
         jenis_kapal = data['jenis_kapal']
 
         hasil = hitung_fuzzy_tsukamoto(tinggi_gelombang, kecepatan_arus, kecepatan_angin, jenis_kapal)
+
+        # simpan juga nilai knot asli biar bisa ditampilkan di frontend
+        hasil['kecepatan_arus_knot'] = kecepatan_arus_knot
 
         return jsonify(hasil)
     except Exception as e:
@@ -444,4 +454,3 @@ def hitung():
 
 if __name__ == '__main__':
     app.run()
-
